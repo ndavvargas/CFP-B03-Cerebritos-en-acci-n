@@ -1,0 +1,32 @@
+ENTREGA 1 - SEMANA 3
+PROYECTO: MONITOREO DE REDES INALÁMBRICAS
+MÓDULO: CONCEPTOS FUNDAMENTALES DE PROGRAMACIÓN
+NIVEL: ESPECIALIZACIÓN - POLITÉCNICO GRANCOLOMBIANO
+
+1. NOMBRE DEL PROYECTO:
+Sistema de Generación de Datos para Monitoreo y Análisis de Saturación en Redes Inalámbricas.
+
+2. PLANTEAMIENTO Y HOMOLOGACIÓN DE REQUERIMIENTOS:
+El proyecto aborda la problemática de congestión y cobertura en infraestructuras de red inalámbrica universitarias o corporativas. Para cumplir con el 100% de los requerimientos funcionales solicitados en la guía evaluativa institucional (Entrega 1.pdf), se establece la siguiente correspondencia funcional directa:
+
+A) Catálogo Maestro de Recursos (Homólogo a Catálogo de Productos):
+- Archivo: dispositivos.csv
+- Contenido: ID del dispositivo, nombre/tipo de equipo, consumo estimado de ancho de banda (Mbps) y prioridad QoS.
+- Método generador: createDeviceTypesFile (compatible con createProductsFile).
+
+B) Maestro de Infraestructura (Homólogo a Catálogo de Vendedores):
+- Archivo: aps.csv
+- Contenido: Identificador del Access Point, nombre de ubicación física y bloque/zona.
+- Método generador: createAccessPointsFile (compatible con createSalesManInfoFile).
+
+C) Registros de Conexión y Eventos (Homólogo a Ventas por Vendedor):
+- Archivos: conexiones_AP*.txt (un archivo independiente por cada Access Point).
+- Contenido: Primera línea con encabezado del nodo. Siguientes líneas con ID de dispositivo cruzado con el catálogo, dirección MAC pseudoaleatoria y potencia de señal RSSI (dBm).
+- Característica clave: Incluye repetición intencional de direcciones MAC (reconexiones) para validar el cálculo de dispositivos únicos y nivel de saturación en las Entregas 2 y 3.
+- Método generador: createConnectionsFile (compatible con createSalesMenFile).
+
+3. ALCANCE DE LA ENTREGA 1 (SEMANA 3):
+- Se entrega la clase GenerateInfoFiles.java, la cual es la única clase ejecutable con método main en esta fase.
+- La ejecución es completamente autónoma (cero solicitudes de datos al usuario).
+- Se implementaron métodos puente con las firmas exactas del numeral 5 de la guía (createSalesMenFile, createProductsFile, createSalesManInfoFile) asegurando plena compatibilidad con pruebas de corrección automática.
+- Compatible con Eclipse y Java 8 (JavaSE-1.8).
