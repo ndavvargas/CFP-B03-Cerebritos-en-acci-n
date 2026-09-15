@@ -1,6 +1,6 @@
 # Entrega 1 - Semana 3
 ## Módulo: Conceptos Fundamentales de Programación
-### Proyecto: Redes Inalámbricas (Generación y Clasificación de Datos)
+Proyecto: Redes Inalámbricas (Generación y Clasificación de Datos)
 
 # CFP-B03 Cerebritos en Accion
 ## Integrantes
