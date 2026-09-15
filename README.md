@@ -2,6 +2,17 @@
 ## Módulo: Conceptos Fundamentales de Programación
 ### Proyecto: Redes Inalámbricas (Generación y Clasificación de Datos)
 
+# CFP-B03 Cerebritos en Accion
+# Integrantes
+
+# CRISTIAN AGUIRRE RAMIREZ
+# ANGIE LEGUIZAMÓN BUITRAGO
+# YENNIFER OFELIA MALAGUERA VASCO
+# NELSON DAVID VARGAS LOPEZ
+# SONIA LILIANA CRUZ REYES
+
+
+
 ---
 
 ### 1. Descripción General
@@ -13,7 +24,7 @@ El proyecto adapta el problema general de generación y clasificación de datos 
 ### 2. Correspondencia de Requerimientos Funcionales
 
 | Implementación en Redes Inalámbricas | Archivo Generado | Método Asociado |
-| :--- | :--- | :--- | :--- |
+
 | **RF1: Catálogo Maestro de Items** | Catálogo de tipos de dispositivos y ancho de banda estimado | `dispositivos.csv` | `createDeviceTypesFile` / `createProductsFile` |
 | **RF2: Catálogo de Nodos / Agrupadores** | Maestro de Access Points (APs) con ubicación y zona física | `aps.csv` | `createAccessPointsFile` / `createSalesManInfoFile` |
 | **RF3: Archivos de Transacciones por Nodo** | Archivos de conexiones con MAC, RSSI y tipo de dispositivo | `conexiones_AP*.txt` | `createConnectionsFile` / `createSalesMenFile` |
