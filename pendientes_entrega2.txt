@@ -1,0 +1,58 @@
+PROYECTO: Redes Inalambricas - Monitoreo de saturacion y consumo de ancho de banda
+ENTREGA 2 - SEMANA 5
+
+
+--------------------------------------------------
+1. QUE YA ESTA TERMINADO
+--------------------------------------------------
+
+- Clase GenerateInfoFiles (con metodo main): genera dispositivos.csv,
+  aps.csv y un archivo conexiones_<AP>.txt por cada Access Point, sin
+  pedir nada al usuario, con mensaje de exito/error.
+
+- Clase main (con metodo main): lee esos archivos y genera los dos
+  reportes obligatorios de la rubrica (puntos 3 y 4), adaptados al
+  dominio de Redes Inalambricas:
+    * reporte_access_points.csv -> equivalente al reporte de vendedores
+      (Access Point, ubicacion y total de ancho de banda consumido,
+      ordenado de mayor a menor).
+    * reporte_dispositivos.csv -> equivalente al reporte de productos
+      (tipo de dispositivo y su ancho de banda, ordenado -sin
+      mostrarla- por la cantidad de conexiones totales, de mayor a
+      menor).
+
+- Deteccion basica de datos incoherentes ya implementada (parte del
+  punto Extra c): id de dispositivo que no existe en el catalogo,
+  ancho de banda negativo o con formato invalido, archivo de conexiones
+  faltante para algun Access Point. En todos estos casos el programa
+  emite un aviso por consola y continua, no se detiene.
+
+- Se probo la ejecucion de punta a punta (GenerateInfoFiles -> main)
+  y se verifico manualmente que el orden de los reportes coincide con
+  los datos reales generados.
+
+--------------------------------------------------
+2. QUE FALTA POR HACER (pendiente para Entrega 3)
+--------------------------------------------------
+
+- Extra (a): procesar mas de un archivo de conexiones por Access Point
+  (actualmente se asume un unico archivo conexiones_<AP>.txt).
+
+- Extra (b): opcion de trabajar con archivos serializados ademas de
+  los archivos de texto plano.
+
+- Revisar si el catalogo de dispositivos necesita poder generarse con
+  mas de 7 tipos (actualmente createDeviceTypesFile limita el maximo
+  al tamano fijo del arreglo interno DEVICE_TYPES).
+
+- Pulir la documentacion Javadoc de GenerateInfoFiles en los metodos
+  de compatibilidad (createProductsFile, createSalesManInfoFile,
+  createSalesMenFile) para dejar explicito que son adaptadores hacia
+  los metodos reales del dominio de Redes Inalambricas.
+
+- Archivo conclusion.txt con lo aprendido, aplicaciones profesionales
+  y dificultades: se entrega formalmente en la Entrega 3, aun no se
+  ha redactado.
+
+- Revision final de nombres de variables y espaciado en todo el
+  proyecto antes de la entrega final.
