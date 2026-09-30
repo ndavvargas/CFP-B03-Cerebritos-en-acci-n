@@ -38,7 +38,7 @@ public class GenerateInfoFiles {
         try {
             createOutputFolder();
 
-            int deviceTypesCount = 5;
+            int deviceTypesCount = DEVICE_TYPES.length;
             int accessPointsCount = 5;
 
             createDeviceTypesFile(deviceTypesCount);
