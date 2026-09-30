@@ -97,19 +97,4 @@ La clase `main.java` procesa los archivos de entrada y escribe:
 
 La suma por eventos es una estimación acumulada; no representa una medición de consumo simultáneo ni una comprobación de saturación del AP.
 
-### 5. Ejecución en Eclipse
 
-1. Descargar y descomprimir el repositorio.
-2. Importar la carpeta mediante **File > Import > Existing Projects into Workspace**.
-3. Configurar el proyecto con Java 8 o un JDK compatible.
-4. Ejecutar `src/GenerateInfoFiles.java` con **Run As > Java Application**.
-5. Ejecutar `src/main.java` con **Run As > Java Application**.
-6. Actualizar el proyecto con **Refresh** y revisar `datos_generados/`.
-
-Ejecutar desde la carpeta raíz del proyecto. Los archivos de entrada y los reportes se crean al ejecutar las clases; no se incluyen resultados de prueba en esta versión.
-
-### 6. Estado y pendientes
-
-Consultar [pendientes_entrega2.txt](pendientes_entrega2.txt), documento adjunto de la versión preliminar. El código Java y ese documento se conservan tal como fueron recibidos en el ZIP de la Entrega 2.
-
-Repositorio de referencia del grupo: [CFP-B03-Cerebritos-en-acci-n](https://github.com/ndavvargas/CFP-B03-Cerebritos-en-acci-n).
