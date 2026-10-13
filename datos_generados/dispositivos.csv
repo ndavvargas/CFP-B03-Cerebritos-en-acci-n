@@ -3,3 +3,5 @@ DEV02;Smartphone_Estudiante;25;Media
 DEV03;Tablet_Laboratorio;20;Media
 DEV04;SmartTV_Auditorio;80;Alta
 DEV05;Sensor_IoT_Ambiente;5;Baja
+DEV06;Terminal_Impresion;10;Baja
+DEV07;Laptop_Estudiante;45;Media
