@@ -1,108 +1,91 @@
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
+import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.text.DecimalFormat;
+import java.text.DecimalFormatSymbols;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
+import java.util.regex.Pattern;
 
 /**
- * Segunda clase con metodo main del proyecto. Procesa los archivos generados
- * por {@link GenerateInfoFiles} (catalogo de dispositivos, catalogo de
- * Access Points y registros de conexion por Access Point) y produce los dos
- * reportes exigidos por la rubrica del proyecto (puntos 3 y 4), adaptados al
- * dominio de Redes Inalambricas:
+ * Segunda clase con metodo main del proyecto. Procesa los catalogos y registros
+ * de conexiones generados para producir los reportes consolidados y ordenados.
  *
- * <ul>
- *   <li><b>reporte_access_points.csv</b> (equivalente al reporte de
- *   vendedores): cada Access Point con el total de ancho de banda
- *   consumido por todas sus conexiones, ordenado de mayor a menor
- *   (el "dinero recaudado" de este dominio).</li>
- *   <li><b>reporte_dispositivos.csv</b> (equivalente al reporte de
- *   productos): tipo de dispositivo y su ancho de banda, ordenados
- *   -sin mostrarla- por la cantidad total de conexiones que ese tipo
- *   registro en toda la red, de mayor a menor.</li>
- * </ul>
- *
- * <p>El programa no solicita ningun dato al usuario. Si una linea de
- * entrada tiene formato incorrecto, referencia un dispositivo inexistente,
- * o falta el archivo de conexiones de algun Access Point, se registra un
- * aviso por consola y se continua con el resto (no se detiene el
- * procesamiento completo por un solo dato invalido).</p>
- *
- * @author Sonia Cruz Reyes
- * @version 1.0 (Entrega 2 - version preliminar del proyecto completo)
+ * @author Cristian Aguirre Ramirez
+ * @author Angie Leguizamon Buitrago
+ * @author Yennifer Ofelia Malaguera Vasco
+ * @author Nelson David Vargas Lopez
+ * @author Sonia Liliana Cruz Reyes
+ * @version 3.0 (Entrega final)
  */
 public class main {
 
-    /** Carpeta donde estan los archivos de entrada y donde se dejan los reportes. */
     private static final String DATA_FOLDER = "datos_generados";
-
-    /** Nombre del archivo con el catalogo de dispositivos. */
     private static final String DEVICES_FILE = "dispositivos.csv";
-
-    /** Nombre del archivo con el catalogo de Access Points. */
     private static final String ACCESS_POINTS_FILE = "aps.csv";
-
-    /** Nombre del reporte final de Access Points (equivalente a vendedores). */
     private static final String ACCESS_POINTS_REPORT = "reporte_access_points.csv";
-
-    /** Nombre del reporte final de dispositivos (equivalente a productos). */
     private static final String DEVICES_REPORT = "reporte_dispositivos.csv";
 
+    private static final int MIN_RSSI = -120;
+    private static final int MAX_RSSI = 0;
+    private static final Pattern MAC_PATTERN =
+            Pattern.compile("^([0-9A-Fa-f]{2}:){5}[0-9A-Fa-f]{2}$");
+
+    private static final DecimalFormat NUMBER_FORMAT =
+            new DecimalFormat("0.##", new DecimalFormatSymbols(Locale.US));
+
+    private main() {
+    }
+
     /**
-     * Punto de entrada del programa. Lee los catalogos y los archivos de
-     * conexion generados por {@code GenerateInfoFiles}, calcula los reportes
-     * y los escribe en disco. Muestra un mensaje de finalizacion exitosa o
-     * de error, sin solicitar ningun dato al usuario.
+     * Punto de entrada principal. Lee catalogos, totaliza consumos y genera reportes.
      *
      * @param args argumentos de linea de comandos (no utilizados).
      */
     public static void main(String[] args) {
         try {
             Map<String, DeviceType> devices = readDeviceTypes();
-            List<AccessPointInfo> accessPoints = readAccessPoints();
+            List<AccessPoint> accessPoints = readAccessPoints();
 
             Map<String, Double> bandwidthByAccessPoint = new HashMap<String, Double>();
-            Map<String, Integer> connectionsByDeviceType = new HashMap<String, Integer>();
+            Map<String, Integer> connectionsByDeviceId = new HashMap<String, Integer>();
 
-            for (AccessPointInfo ap : accessPoints) {
-                double totalBandwidth = processConnectionsFile(ap.getId(), devices, connectionsByDeviceType);
-                bandwidthByAccessPoint.put(ap.getId(), totalBandwidth);
+            for (AccessPoint accessPoint : accessPoints) {
+                double totalBandwidth = processAccessPoint(accessPoint.getId(), devices, connectionsByDeviceId);
+                bandwidthByAccessPoint.put(accessPoint.getId(), totalBandwidth);
             }
 
             writeAccessPointsReport(accessPoints, bandwidthByAccessPoint);
-            writeDevicesReport(devices, connectionsByDeviceType);
+            writeDevicesReport(devices, connectionsByDeviceId);
 
-            System.out.println("==================================================");
-            System.out.println("PROCESAMIENTO DE REPORTES FINALIZADO EXITOSAMENTE");
-            System.out.println("Reportes generados en: " + DATA_FOLDER);
-            System.out.println("==================================================");
-        } catch (Exception error) {
+            System.out.println("============================================");
+            System.out.println("REPORTES GENERADOS EXITOSAMENTE");
+            System.out.println("Archivos creados en la carpeta: " + DATA_FOLDER);
+            System.out.println("============================================");
+        } catch (IOException error) {
             System.err.println("ERROR: No fue posible generar los reportes.");
             System.err.println("Detalle: " + error.getMessage());
         }
     }
 
     /**
-     * Lee el catalogo de dispositivos ({@code dispositivos.csv}).
-     * Formato de cada linea: {@code IDDispositivo;TipoDispositivo;AnchoBandaMbps;PrioridadQoS}.
+     * Carga el catalogo de dispositivos desde {@code dispositivos.csv}.
      *
-     * @return un mapa de IDDispositivo a su informacion completa.
-     * @throws IOException si el archivo no existe o no puede leerse.
+     * @return mapa de ID de dispositivo a su objeto {@link DeviceType}.
+     * @throws IOException si ocurre un error de lectura.
      */
     private static Map<String, DeviceType> readDeviceTypes() throws IOException {
         Map<String, DeviceType> devices = new HashMap<String, DeviceType>();
-        File file = new File(DATA_FOLDER, DEVICES_FILE);
-
-        if (!file.exists()) {
-            throw new IOException("No se encontro el archivo " + DEVICES_FILE
-                    + ". Ejecute primero GenerateInfoFiles.");
-        }
+        File file = requireFile(DEVICES_FILE);
 
         BufferedReader reader = new BufferedReader(new FileReader(file));
         try {
@@ -114,16 +97,15 @@ public class main {
 
                 String[] fields = line.split(";");
                 if (fields.length < 4) {
-                    System.err.println("AVISO: linea con formato incorrecto en " + DEVICES_FILE + ": " + line);
+                    warn("linea con formato incorrecto en " + DEVICES_FILE + ": " + line);
                     continue;
                 }
 
                 String id = fields[0].trim();
                 String type = fields[1].trim();
                 double bandwidth = parseBandwidth(fields[2].trim(), line);
-                String priority = fields[3].trim();
 
-                devices.put(id, new DeviceType(id, type, bandwidth, priority));
+                devices.put(id, new DeviceType(id, type, bandwidth));
             }
         } finally {
             reader.close();
@@ -133,45 +115,14 @@ public class main {
     }
 
     /**
-     * Convierte el texto de ancho de banda a un numero, validando que no
-     * sea negativo ni tenga formato invalido (deteccion de informacion
-     * incoherente).
+     * Carga el catalogo de Access Points desde {@code aps.csv}.
      *
-     * @param rawValue     el texto leido del archivo.
-     * @param originalLine la linea completa, usada solo para el mensaje de aviso.
-     * @return el valor numerico, o 0 si el dato era invalido o negativo.
+     * @return lista de objetos {@link AccessPoint}.
+     * @throws IOException si ocurre un error de lectura.
      */
-    private static double parseBandwidth(String rawValue, String originalLine) {
-        try {
-            double value = Double.parseDouble(rawValue);
-
-            if (value < 0) {
-                System.err.println("AVISO: ancho de banda negativo, se ajusta a 0 en: " + originalLine);
-                return 0;
-            }
-
-            return value;
-        } catch (NumberFormatException error) {
-            System.err.println("AVISO: ancho de banda con formato invalido, se asume 0 en: " + originalLine);
-            return 0;
-        }
-    }
-
-    /**
-     * Lee el catalogo de Access Points ({@code aps.csv}).
-     * Formato de cada linea: {@code TipoID;ID_AP;Ubicacion;BloqueZona}.
-     *
-     * @return la lista de Access Points encontrados.
-     * @throws IOException si el archivo no existe o no puede leerse.
-     */
-    private static List<AccessPointInfo> readAccessPoints() throws IOException {
-        List<AccessPointInfo> accessPoints = new ArrayList<AccessPointInfo>();
-        File file = new File(DATA_FOLDER, ACCESS_POINTS_FILE);
-
-        if (!file.exists()) {
-            throw new IOException("No se encontro el archivo " + ACCESS_POINTS_FILE
-                    + ". Ejecute primero GenerateInfoFiles.");
-        }
+    private static List<AccessPoint> readAccessPoints() throws IOException {
+        List<AccessPoint> accessPoints = new ArrayList<AccessPoint>();
+        File file = requireFile(ACCESS_POINTS_FILE);
 
         BufferedReader reader = new BufferedReader(new FileReader(file));
         try {
@@ -183,15 +134,11 @@ public class main {
 
                 String[] fields = line.split(";");
                 if (fields.length < 4) {
-                    System.err.println("AVISO: linea con formato incorrecto en " + ACCESS_POINTS_FILE + ": " + line);
+                    warn("linea con formato incorrecto en " + ACCESS_POINTS_FILE + ": " + line);
                     continue;
                 }
 
-                String id = fields[1].trim();
-                String location = fields[2].trim();
-                String block = fields[3].trim();
-
-                accessPoints.add(new AccessPointInfo(id, location, block));
+                accessPoints.add(new AccessPoint(fields[1].trim(), fields[2].trim()));
             }
         } finally {
             reader.close();
@@ -201,36 +148,53 @@ public class main {
     }
 
     /**
-     * Procesa el archivo de conexiones de un Access Point especifico
-     * ({@code conexiones_<accessPointId>.txt}): valida cada linea contra el
-     * catalogo de dispositivos y acumula, por tipo de dispositivo, el total
-     * de conexiones registradas en toda la red (parametro de salida
-     * {@code connectionsByDeviceType}).
+     * Procesa todos los archivos de conexiones asociados a un Access Point.
      *
-     * @param accessPointId           id del Access Point a procesar.
-     * @param devices                 catalogo de dispositivos ya cargado.
-     * @param connectionsByDeviceType mapa acumulador (TipoDispositivo -&gt;
-     *                                total de conexiones); se actualiza
-     *                                dentro de este metodo.
-     * @return la suma del ancho de banda (Mbps) de todas las conexiones
-     *         validas registradas en este Access Point.
+     * @param accessPointId identificador del Access Point.
+     * @param devices catalogo de dispositivos.
+     * @param connectionsByDeviceId acumulador de conexiones por dispositivo.
+     * @return total de ancho de banda consumido en Mbps.
      */
-    private static double processConnectionsFile(String accessPointId, Map<String, DeviceType> devices,
-            Map<String, Integer> connectionsByDeviceType) {
+    private static double processAccessPoint(final String accessPointId, Map<String, DeviceType> devices,
+            Map<String, Integer> connectionsByDeviceId) {
 
-        File file = new File(DATA_FOLDER, "conexiones_" + accessPointId + ".txt");
-        double totalBandwidth = 0;
+        File[] files = new File(DATA_FOLDER).listFiles(new FilenameFilter() {
+            @Override
+            public boolean accept(File dir, String name) {
+                String exactName = "conexiones_" + accessPointId + ".txt";
+                String prefix = "conexiones_" + accessPointId + "_";
+                return name.equals(exactName) || (name.startsWith(prefix) && name.endsWith(".txt"));
+            }
+        });
 
-        if (!file.exists()) {
-            System.err.println("AVISO: no se encontro el archivo de conexiones del AP " + accessPointId
-                    + ". Se asumira 0 Mbps consumidos para ese Access Point.");
+        if (files == null || files.length == 0) {
+            warn("no se encontro ningun archivo de conexiones del AP " + accessPointId
+                    + ". Se asumira 0 Mbps consumidos.");
             return 0;
         }
 
+        Arrays.sort(files);
+
+        double totalBandwidth = 0;
+        for (File file : files) {
+            totalBandwidth += processConnectionsFile(file, devices, connectionsByDeviceId);
+        }
+
+        return totalBandwidth;
+    }
+
+    /**
+     * Lee y valida un archivo de conexiones, acumulando consumo y frecuencia de uso.
+     */
+    private static double processConnectionsFile(File file, Map<String, DeviceType> devices,
+            Map<String, Integer> connectionsByDeviceId) {
+
+        double totalBandwidth = 0;
         BufferedReader reader = null;
+
         try {
             reader = new BufferedReader(new FileReader(file));
-            reader.readLine(); // Primera linea: AP;ID_AP;Ubicacion (no se necesita en este calculo).
+            reader.readLine(); // Encabezado: AP;ID_AP;Ubicacion
 
             String line;
             while ((line = reader.readLine()) != null) {
@@ -240,34 +204,39 @@ public class main {
 
                 String[] fields = line.split(";");
                 if (fields.length < 3) {
-                    System.err.println("AVISO: linea con formato incorrecto en conexiones_"
-                            + accessPointId + ".txt: " + line);
+                    warn("linea con formato incorrecto en " + file.getName() + ": " + line);
                     continue;
                 }
 
                 String deviceId = fields[0].trim();
                 DeviceType device = devices.get(deviceId);
-
                 if (device == null) {
-                    System.err.println("AVISO: id de dispositivo inexistente (" + deviceId
-                            + ") en conexiones_" + accessPointId + ".txt");
+                    warn("dispositivo inexistente (" + deviceId + ") en " + file.getName() + ": " + line);
+                    continue;
+                }
+
+                if (!MAC_PATTERN.matcher(fields[1].trim()).matches()) {
+                    warn("direccion MAC invalida en " + file.getName() + ": " + line);
+                    continue;
+                }
+
+                if (!isValidRssi(fields[2].trim())) {
+                    warn("valor RSSI invalido en " + file.getName() + ": " + line);
                     continue;
                 }
 
                 totalBandwidth += device.getBandwidth();
 
-                Integer currentTotal = connectionsByDeviceType.get(device.getType());
-                int newTotal = (currentTotal == null ? 0 : currentTotal) + 1;
-                connectionsByDeviceType.put(device.getType(), newTotal);
+                Integer current = connectionsByDeviceId.get(deviceId);
+                connectionsByDeviceId.put(deviceId, (current == null ? 0 : current) + 1);
             }
         } catch (IOException error) {
-            System.err.println("AVISO: error al leer conexiones_" + accessPointId + ".txt: " + error.getMessage());
+            warn("error al leer " + file.getName() + ": " + error.getMessage());
         } finally {
             if (reader != null) {
                 try {
                     reader.close();
                 } catch (IOException ignored) {
-                    // No es critico si falla el cierre de un archivo que ya se termino de leer.
                 }
             }
         }
@@ -276,33 +245,25 @@ public class main {
     }
 
     /**
-     * Genera {@code reporte_access_points.csv}, equivalente al reporte de
-     * vendedores exigido por la rubrica. Formato de cada linea:
-     * {@code ID_AP;Ubicacion;TotalAnchoBandaConsumidoMbps}, ordenado de
-     * mayor a menor ancho de banda consumido.
-     *
-     * @param accessPoints           lista de Access Points (se ordena in-place).
-     * @param bandwidthByAccessPoint mapa con el total de Mbps por Access Point.
-     * @throws IOException si ocurre un error al escribir el archivo.
+     * Genera {@code reporte_access_points.csv} ordenado descendentemente por consumo total.
      */
-    private static void writeAccessPointsReport(List<AccessPointInfo> accessPoints,
+    private static void writeAccessPointsReport(List<AccessPoint> accessPoints,
             final Map<String, Double> bandwidthByAccessPoint) throws IOException {
 
-        Collections.sort(accessPoints, new Comparator<AccessPointInfo>() {
+        Collections.sort(accessPoints, new Comparator<AccessPoint>() {
             @Override
-            public int compare(AccessPointInfo primero, AccessPointInfo segundo) {
-                double totalPrimero = bandwidthByAccessPoint.get(primero.getId());
-                double totalSegundo = bandwidthByAccessPoint.get(segundo.getId());
-                return Double.compare(totalSegundo, totalPrimero);
+            public int compare(AccessPoint first, AccessPoint second) {
+                int byBandwidth = Double.compare(bandwidthByAccessPoint.get(second.getId()),
+                        bandwidthByAccessPoint.get(first.getId()));
+                return (byBandwidth != 0) ? byBandwidth : first.getId().compareTo(second.getId());
             }
         });
 
-        File outputFile = new File(DATA_FOLDER, ACCESS_POINTS_REPORT);
-        PrintWriter writer = new PrintWriter(outputFile, "UTF-8");
+        PrintWriter writer = new PrintWriter(new File(DATA_FOLDER, ACCESS_POINTS_REPORT), "UTF-8");
         try {
-            for (AccessPointInfo ap : accessPoints) {
-                double total = bandwidthByAccessPoint.get(ap.getId());
-                writer.println(ap.getId() + ";" + ap.getLocation() + ";" + total);
+            for (AccessPoint accessPoint : accessPoints) {
+                writer.println(accessPoint.getId() + ";" + accessPoint.getLocation() + ";"
+                        + NUMBER_FORMAT.format(bandwidthByAccessPoint.get(accessPoint.getId())));
             }
         } finally {
             writer.close();
@@ -310,62 +271,81 @@ public class main {
     }
 
     /**
-     * Genera {@code reporte_dispositivos.csv}, equivalente al reporte de
-     * productos exigido por la rubrica. Formato de cada linea:
-     * {@code TipoDispositivo;AnchoBandaMbps} (sin mostrar la cantidad de
-     * conexiones, tal como pide la rubrica para el reporte de productos),
-     * ordenado -por dentro- de mayor a menor cantidad de conexiones totales
-     * registradas en la red para ese tipo de dispositivo.
-     *
-     * @param devices                 catalogo de dispositivos.
-     * @param connectionsByDeviceType mapa con el total de conexiones por tipo de dispositivo.
-     * @throws IOException si ocurre un error al escribir el archivo.
+     * Genera {@code reporte_dispositivos.csv} ordenado por cantidad de conexiones.
      */
     private static void writeDevicesReport(Map<String, DeviceType> devices,
-            final Map<String, Integer> connectionsByDeviceType) throws IOException {
+            final Map<String, Integer> connectionsByDeviceId) throws IOException {
 
         List<DeviceType> orderedDevices = new ArrayList<DeviceType>(devices.values());
 
         Collections.sort(orderedDevices, new Comparator<DeviceType>() {
             @Override
-            public int compare(DeviceType primero, DeviceType segundo) {
-                int totalPrimero = getTotalConnections(primero.getType());
-                int totalSegundo = getTotalConnections(segundo.getType());
-                return Integer.compare(totalSegundo, totalPrimero);
+            public int compare(DeviceType first, DeviceType second) {
+                int byConnections = Integer.compare(getConnections(second.getId()), getConnections(first.getId()));
+                return (byConnections != 0) ? byConnections : first.getType().compareTo(second.getType());
             }
 
-            private int getTotalConnections(String deviceType) {
-                Integer total = connectionsByDeviceType.get(deviceType);
-                return (total == null ? 0 : total);
+            private int getConnections(String deviceId) {
+                Integer total = connectionsByDeviceId.get(deviceId);
+                return (total == null) ? 0 : total;
             }
         });
 
-        File outputFile = new File(DATA_FOLDER, DEVICES_REPORT);
-        PrintWriter writer = new PrintWriter(outputFile, "UTF-8");
+        PrintWriter writer = new PrintWriter(new File(DATA_FOLDER, DEVICES_REPORT), "UTF-8");
         try {
             for (DeviceType device : orderedDevices) {
-                writer.println(device.getType() + ";" + device.getBandwidth());
+                writer.println(device.getType() + ";" + NUMBER_FORMAT.format(device.getBandwidth()));
             }
         } finally {
             writer.close();
         }
     }
 
-    /**
-     * Representa un tipo de dispositivo del catalogo.
-     */
-    private static class DeviceType {
+    private static File requireFile(String fileName) throws IOException {
+        File file = new File(DATA_FOLDER, fileName);
+        if (!file.exists()) {
+            throw new IOException("No se encontro el archivo " + fileName
+                    + " en la carpeta " + DATA_FOLDER + ". Ejecute primero GenerateInfoFiles.");
+        }
+        return file;
+    }
 
+    private static double parseBandwidth(String rawValue, String originalLine) {
+        try {
+            double value = Double.parseDouble(rawValue);
+            if (value < 0) {
+                warn("ancho de banda negativo, se asume 0 en: " + originalLine);
+                return 0;
+            }
+            return value;
+        } catch (NumberFormatException error) {
+            warn("ancho de banda invalido, se asume 0 en: " + originalLine);
+            return 0;
+        }
+    }
+
+    private static boolean isValidRssi(String rawValue) {
+        try {
+            int value = Integer.parseInt(rawValue);
+            return value >= MIN_RSSI && value <= MAX_RSSI;
+        } catch (NumberFormatException error) {
+            return false;
+        }
+    }
+
+    private static void warn(String message) {
+        System.err.println("AVISO: " + message);
+    }
+
+    private static class DeviceType {
         private final String id;
         private final String type;
         private final double bandwidth;
-        private final String priority;
 
-        DeviceType(String id, String type, double bandwidth, String priority) {
+        DeviceType(String id, String type, double bandwidth) {
             this.id = id;
             this.type = type;
             this.bandwidth = bandwidth;
-            this.priority = priority;
         }
 
         String getId() {
@@ -379,25 +359,15 @@ public class main {
         double getBandwidth() {
             return bandwidth;
         }
-
-        String getPriority() {
-            return priority;
-        }
     }
 
-    /**
-     * Representa un Access Point del catalogo.
-     */
-    private static class AccessPointInfo {
-
+    private static class AccessPoint {
         private final String id;
         private final String location;
-        private final String block;
 
-        AccessPointInfo(String id, String location, String block) {
+        AccessPoint(String id, String location) {
             this.id = id;
             this.location = location;
-            this.block = block;
         }
 
         String getId() {
@@ -406,10 +376,6 @@ public class main {
 
         String getLocation() {
             return location;
-        }
-
-        String getBlock() {
-            return block;
         }
     }
 }
