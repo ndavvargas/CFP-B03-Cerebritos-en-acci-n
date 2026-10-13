@@ -1,0 +1,51 @@
+CONCLUSIONES DEL PROYECTO - GENERACION Y CLASIFICACION DE DATOS (REDES INALAMBRICAS)
+Modulo: Conceptos Fundamentales de Programacion - Politecnico Grancolombiano
+
+1. LO APRENDIDO DURANTE EL DESARROLLO DEL PROYECTO
+
+- Separar un problema en dos programas independientes que se comunican solo
+  mediante archivos planos: GenerateInfoFiles crea los datos de prueba y main
+  los procesa y genera los reportes.
+- Leer y escribir archivos en Java (BufferedReader, PrintWriter) cerrandolos
+  siempre con try/finally, y recorrer carpetas buscando archivos por nombre.
+- Acumular informacion con estructuras como Map y List, y ordenarla de mayor a
+  menor con Collections.sort y Comparator, incluyendo un criterio de desempate
+  para que el resultado sea siempre el mismo.
+- Validar la entrada sin detener el programa: detectar lineas mal formadas,
+  dispositivos que no existen en el catalogo, direcciones MAC o valores RSSI
+  invalidos y anchos de banda negativos, avisando por consola y continuando.
+- Documentar con Javadoc, nombrar bien las variables y mantener un espaciado
+  consistente, de modo que otra persona entienda el codigo sin explicacion.
+- Adaptar un enunciado generico (vendedores, productos, ventas) a un dominio
+  distinto (Access Points, tipos de dispositivo, conexiones) conservando la
+  estructura exigida por la rubrica.
+- Verificar los resultados con un calculo independiente y no solo confiar en el
+  propio programa; usar Eclipse, Java 8 y un repositorio en GitHub.
+
+2. POSIBLES APLICACIONES EN LA VIDA PROFESIONAL
+
+- En soporte de TI y analisis de datos operativos: generar reportes ordenados a
+  partir de archivos planos o extracciones, que es muy parecido a consolidar
+  informacion por aliado, por canal o por cliente.
+- Validar informacion antes de usarla (registros incompletos, identificadores
+  inexistentes, valores negativos), una practica clave en procesos de
+  validacion de clientes y en la calidad de los datos.
+- Crear datos de prueba pseudoaleatorios pero coherentes para reproducir fallos
+  y probar cambios sin usar informacion real.
+- Documentar el codigo y los procedimientos de forma clara, lo que facilita el
+  trabajo en equipo, el reporte de errores y el mantenimiento posterior.
+
+3. DIFICULTADES PRESENTADAS DURANTE EL DESARROLLO
+
+- Traducir la rubrica de ventas al dominio de redes: decidir que significan
+  "dinero recaudado" (ancho de banda consumido por Access Point) y "cantidad
+  vendida" (numero de conexiones por tipo de dispositivo).
+- Cumplir al pie de la letra requisitos formales: solo dos clases con metodo
+  main, la segunda llamada "main" en minuscula, sin pedir datos al usuario, y el
+  reporte de dispositivos ordenado por una cantidad que no se muestra.
+- Manejar datos erroneos sin que el programa se detenga, y evitar errores
+  sutiles como la confusion entre identificadores parecidos al buscar archivos.
+- Preparar un entorno de ejecucion en linea que no tenia Java instalado, y
+  mantener el proyecto compatible con Eclipse y Java 8.
+- Mantener ordenado el repositorio compartido (sin archivos duplicados ni clases
+  con main de mas) y coordinar las versiones del codigo entre varias personas.
